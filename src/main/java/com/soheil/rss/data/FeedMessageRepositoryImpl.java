@@ -42,8 +42,8 @@ public class FeedMessageRepositoryImpl implements FeedMessageRepository {
     @Override
     public List<FeedMessage> findLastItems(int i) {
 
-        List<FeedMessage> feedMessageList = jdbc.query("select top(" + i + ") id, link, title, html_desc, text_desc, source, item_time, fetch_time from Feed_Message order by fetch_time desc",
-                this::mapRowToFeedMessage);
+        List<FeedMessage> feedMessageList = jdbc.query("select id, link, title, html_desc, text_desc, source, item_time, fetch_time from Feed_Message order by fetch_time desc limit ?",
+                this::mapRowToFeedMessage, i);
 
         if (feedMessageList.isEmpty()) {
             throw new FeedMessageNotFoundException("No feed message exists!");

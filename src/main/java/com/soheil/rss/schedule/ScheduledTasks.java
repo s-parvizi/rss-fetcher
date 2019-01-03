@@ -3,10 +3,12 @@ package com.soheil.rss.schedule;
 import com.rometools.rome.feed.synd.SyndEntry;
 import com.soheil.rss.data.FeedMessageRepository;
 import com.soheil.rss.data.model.FeedMessage;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.messaging.Message;
@@ -16,7 +18,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -25,11 +28,10 @@ import java.util.Date;
  */
 
 @Component
+@Slf4j
 public class ScheduledTasks {
 
-    private static final Logger log = LoggerFactory.getLogger(ScheduledTasks.class);
-
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MM/dd/yyyy 'at' hh:mm a");
 
     private ConfigurableApplicationContext ac =
             new ClassPathXmlApplicationContext("integration/FeedInboundChannelAdapter.xml");
@@ -45,7 +47,7 @@ public class ScheduledTasks {
     @Scheduled(fixedRateString = "${rss.fetch.interval}", initialDelay = 1000)
     private void rssFetchSchedule() {
 
-        log.info("Fetching New Data, The time is now {}", dateFormat.format(new Date()));
+        log.info("Fetching New Data, The time is now {}", dateFormat.format(LocalDateTime.now()));
 
         fetchData();
 
@@ -68,7 +70,7 @@ public class ScheduledTasks {
 
             } else {
 
-                log.info("Message is null, The time is now {}", dateFormat.format(new Date()));
+                log.info("Message is null, The time is now {}", dateFormat.format(LocalDateTime.now()));
                 break;
 
             }
@@ -87,11 +89,11 @@ public class ScheduledTasks {
         feedMessage.setHtmlDescription(message.getPayload().getDescription().getValue());
         feedMessage.setTextDescription(html2text(message.getPayload().getDescription().getValue()));
 
-        if (message.getPayload().getSource()!=null) {
+        if (message.getPayload().getSource() != null) {
             feedMessage.setSource(message.getPayload().getSource().getLink());
         }
 
-        if (message.getHeaders().getTimestamp()!=null) {
+        if (message.getHeaders().getTimestamp() != null) {
             feedMessage.setItemTimeStamp(new Timestamp(message.getHeaders().getTimestamp()));
         }
 
